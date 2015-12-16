@@ -1,0 +1,6 @@
+data/
+testdata/
+*.ms
+*.pdf
+*.psmcfa
+*.psmc
