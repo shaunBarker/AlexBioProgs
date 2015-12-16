@@ -1,0 +1,62 @@
+#!/bin/sh
+# PSMC_on_frag
+
+
+# order4manga
+##############################################################################
+#app=`basename $0`
+#this_dir=`pwd`
+#this_dir_base=`basename "$this_dir"`
+#outfname="$this_dir_base".cbz
+#
+###############################################################################
+#prefix_val=0	# Will be transformed into prefix="000_","001_","002_",...
+#
+#echo "Adding a prefix to every file within each sub-folder"
+#for dir in *; do
+#  if [ -d "$dir" ]; then		# Within this dir
+#      fnameval=0
+#
+#   prefix=`awk -vpre=$prefix_val 'BEGIN{printf "%03d_",pre}'`
+#   for fname in "$dir"/*; do		# Add same prefix to each file in this dir
+#      dirname=`dirname "$fname"`
+#      basename=`basename "$fname"`
+#      extension="${basename##*.}"
+#      newname=`awk -vpre=$fnameval 'BEGIN{printf "%03d",pre}'`
+#      cmd="mv -vf \"$fname\" \"$dirname/$prefix$newname.$extension\""
+#      fnameval=`expr $fnameval + 1`
+#      echo "### Command:  $cmd"
+#      eval $cmd
+#    done
+#
+#    prefix_val=`expr $prefix_val + 1`	# Increment
+#  fi
+#done
+#
+#echo
+#echo "Creating zip file: '$outfname'"
+#zip -r "$outfname" .
+#############################################################3
+
+# location=`pwd`
+
+mkdir psmcfa
+mkdir psmc
+mkdir pdf_graphs
+
+for fname_in in *.ms ; do # for every .ms file in the directory...
+
+    echo Current file: $fname_in.
+    fname=`basename "$fname_in" | cut -d. -f1` # store the name of the ms file, without the extension
+
+    echo Converting to psmcfa.
+    perl /home/alex/Desktop/Software/PSMC/psmc-master/utils/ms2psmcfa.pl $fname > psmcfa/$fname.psmcfa # convert to psmc filetype
+
+    echo Running PSMC.
+    /home/alex/Desktop/Software/PSMC/psmc-master/psmc $fname.psmcfa > psmc/$fname.psmc  # run psmc on it
+    
+    echo Creating graph.
+    perl /home/alex/Desktop/Software/PSMC/psmc-master/utils/psmc_plot.pl -p $fname psmc/$fname.psmc # plots results of psmc
+    mv $fname.pdf /pdf_graphs/
+    rm $fname.eps
+done
