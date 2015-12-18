@@ -1,0 +1,50 @@
+#!/bin/sh
+# GenContigs
+
+#############################
+# HOW TO RUN:
+# Takes a psmcfa file with ONLY ONE sequence as input, and takes a ChunkLength random sample from the file. ChunkLength should be significantly smaller than the length of the input sequence.
+
+# ./GenContigs ChunkLength FileName
+
+##############################
+
+# ChunkLength is how long we want the contig to be.
+ChunkLength=$1 # $1 is the first argument (input) of the script.
+echo $ChunkLength chunk length
+
+FirstLine=$(head -1 $2) # stores first line
+echo $FirstLine first line
+
+sed '1d' $2 > WithoutLine1 # removes first line
+head WithoutLine1
+
+# NumChars is how many relevant characters the file has. Doesn't include the >chrom1 (first line) at the beginning.
+# FirstLineChars=`head -1 $2 | wc -m`
+NumChars=`wc -m GenContigsOutput.psmcfa | cut -f1 -d' '`
+echo $NumChars e3
+DataChars=`expr $NumChars - 1` # because word count always adds one
+echo $DataChars e4
+
+EndRange=`expr $DataChars - $ChunkLength`
+echo $EndRange e5
+if [ "$EndRange" -le "0" ]; then # sanity check
+    echo Warning: Desired contig length is greater than data length! Aborting.
+    exit
+fi
+
+# generate where I'm gonna start the chunk from
+BeginPoint=`shuf -i 1-$EndRange -n 1`
+EndPoint=`expr $BeginPoint + $ChunkLength - 1` # -1 to account for wanting n, not n+1
+echo $BeginPoint $EndPoint e6
+
+# initialise output file by adding the label we removed before
+printf "$FirstLine\n" > tmp
+
+# make sequence file in one line
+cat WithoutLine1 |tr -d '\n' > OneLineOutput
+# cut the chunk out of the one line file
+cut -c $BeginPoint-$EndPoint OneLineOutput | printf > Contig.psmcfa
+
+rm WithoutLine1
+rm OneLineOutput
