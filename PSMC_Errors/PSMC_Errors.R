@@ -23,20 +23,34 @@ ValidTrueMinPos
 ValidTrueMin = TrueData$V1[ValidTrueMinPos]
 ValidTrueMin
 
-ValueStatement = ValidTestMin > ValidTrueMin # interested in max it cuts of anything where we can't make a comparison
+ValueStatement = ValidTestMin > ValidTrueMin # which is the MOST ANCIENT of the two most recent valid first points
 ValueStatement
-if (ValueStatement == TRUE) {
-  Value = TestData$V2[ValidTestMinPos]
+if (ValueStatement == TRUE) { # TRUE means that Test is more ancient, FALSE means that True is more ancient
+  Value = TestData$V2[ValidTestMinPos] # Take the population value of the Test run
 } else {
-    Value = TrueData$V2[ValidTestMinPos]
+    Value = TrueData$V2[ValidTestMinPos] # Take the population value of the True data
   }
 Value
 
 ######
-# try brute force first...
-TtestChange
+# Now we want to find the first place where we change in value
+TestChange = which(x =/= Value)[[1]]
 
 ######
+
+# PLAY WITH FUNCTIOMS
+PiecewiseConstantFunc = function(InVec){
+  n = length(InVec)
+  
+  for (v in 1:n) {
+    
+  }
+}
+
+plot( function(x){
+  if ( x>=1 ) {x}
+  ifelse( {x< 1 & x>0}, x,  -x) 
+} -1, 2)
 
 # need to find where we change in value
 
