@@ -21,7 +21,7 @@ absdifference = function(xpos){
 
 integrate(absdifference,2,8.5)
 
-###################### NEW CODE
+###################### NEW CODE ##########################################################
 # set up functions
 eval_popsize = function(pos, x, y){ 
   xIndex = length(which(x <= pos))
@@ -47,7 +47,22 @@ Results = data.frame() # for storing results
 # check errors for each one
 for (infile in filelist) {
   data.infile = read.table(infile,header=FALSE)
-  integration_val = integrate(absdifference,20000,3000000, d1=fullData$V1, d2=fullData$V2, d3=data.infile$V1, d4=data.infile$V2, subdivisions=10000) # the 20000 and 300000 are the limits suggested by the paper
+  ### where to integrate between - don't want data derived from before 20 000 years
+  ValidDataMinPos = which(data.infile$V1 >= 20000 & data.infile$V1 <= 3000000)[[1]]
+  ValidDataMin = data.infile$V1[ValidDataMinPos]
+
+  # get the first point from fullData
+  ValidFullMinPos = which(fullData$V1 >= 20000 & fullData$V1 <= 3000000)[[1]]
+  ValidFullMin = fullData$V1[ValidFullMinPos]
+
+  ValueStatement = ValidDataMin > ValidFullMin # which is the MOST ANCIENT of the two most recent valid first points
+  if (ValueStatement == TRUE) { # TRUE means that Test is more ancient, FALSE means that True is more ancient
+    Value = data.infile$V2[ValidDataMinPos] # Take the population value of the Test run
+  } else {
+    Value = fullData$V2[ValidFullMinPos] # Take the population value of the Full data
+  }
+  ###
+  integration_val = integrate(absdifference,Value,3000000, d1=fullData$V1, d2=fullData$V2, d3=data.infile$V1, d4=data.infile$V2, subdivisions=10000) # the 20000 and 300000 are the limits suggested by the paper
   int_and_info = c(integration_val$value,integration_val$abs.error)
   Results = rbind(Results,int_and_info)
 }
@@ -55,8 +70,11 @@ colnames(Results) = c("Integral","Abs.Error")
 rownames(Results) = c(filelist)
 
 OrdResults = Results[order(Results$Integral),]
+# SplitOrder = c(1/2,1/4,1/8,1/32,1/16,1/64,1/256,1/128,1/1024,1/512)
+SplitOrder = c(1/8,1/4,1/2,1/16,1/32,1/128,1/64,1/256,1/1024,1/512)
+plot(SplitOrder,OrdResults$Integral)
 
-SplitOrder = c(1/2,1/4,1/8,1/32,1/16,1/64,1/256,1/128,1/1024,1/512)
+
 IntVSplit.lm = lm(log(OrdResults$Integral) ~ log(SplitOrder))
 summary(IntVSplit.lm)
 
