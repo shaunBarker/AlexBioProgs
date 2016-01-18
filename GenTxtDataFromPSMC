@@ -1,0 +1,6 @@
+#!/bin/bash
+for filename in *.psmc; do
+	removeDataFromPSMC.sh "$filename" > "$filename.txt"
+#        psmc -p "10*1" "$filename">"$filename.psmc"
+	echo "$filename"
+done
