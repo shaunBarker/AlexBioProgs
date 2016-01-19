@@ -1,21 +1,26 @@
+# THE TRUTH!
+TrueTimes = 4*c(0.01,0.06,0.2,1,2) # from ms command
+TruePops = c(0.1,1,0.5,1,2)
+
 # the 30 Mbp test
 setwd("/home/alex/Desktop/Simulations/SplittingChromosomes/binarySplitData1Chromosome30Mbp/extractPSMCoutput/")
-filelist30 = list.files(pattern = "*.txt")
-filelist30 = filelist30[-3] # remove the fullData file
+#filelist30 = list.files(pattern = "*.txt")
+# filelist30 = filelist30[-3] # remove the fullData file
 
-fullData30 = read.table("fullData.psmcfa.psmc.txt",header=TRUE)
-plot(log(fullData30$t_k),fullData30$lambda_k,"s",ylim=c(0,15),xlim=c(-4,4),lwd=4)
+# fullData30 = read.table("fullData.psmcfa.psmc.txt",header=TRUE)
+#plot(log(TrueTimes),TruePops,"s",ylim=c(0,15),xlim=c(-4,4),lwd=4)
 #legend("right",c("Black: full"),bty=n)
 
-for (infile in filelist30) {
-  infile.data = read.table(infile,header=TRUE)
-  lines(log(infile.data$t_k),infile.data$lambda_k,"s",col="red")
-}
+#for (infile in filelist30) {
+#  infile.data = read.table(infile,header=TRUE)
+#  lines(log(infile.data$t_k),infile.data$lambda_k,"s",col="red")
+#}
 
-HalfSplitData30 = read.table(filelist30[3],header=TRUE)
-lines(log(HalfSplitData30$t_k),HalfSplitData30$lambda_k,"s",col="green",lwd=2)
+# HalfSplitData30 = read.table(filelist30[3],header=TRUE)
+# lines(log(HalfSplitData30$t_k),HalfSplitData30$lambda_k,"s",col="green",lwd=2)
 
-plot(log(fullData30$t_k),fullData30$lambda_k,"s",ylim=c(0,15),xlim=c(-4,4),lwd=5)
+# START HERE 
+plot(log(TrueTimes),TruePops,"s",ylim=c(0,15),xlim=c(-4,4),lwd=5,main="30Mbp")
 collist = c("blue","brown","gold","red","green","purple","cyan","orange","magenta","pink","darkolivegreen")
 counter = 1
 for (infile in rev(filelist30)) {
@@ -29,10 +34,10 @@ legend("topleft",rev(filelist30),fill=collist,bty="n",cex=0.8) # so basically, 6
 # the 20 Mbp test
 setwd("/home/alex/Desktop/Simulations/SplittingChromosomes/binarySplitData1Chromosome20Mbp/")
 filelist20 = list.files(pattern = "*.txt")
-filelist20 = filelist20[-4] # remove the fullData file
+# filelist20 = filelist20[-4] # remove the fullData file
 
-fullData20 = read.table("20Mbp_run.ms.psmcfa.psmc.txt",header=TRUE)
-plot(log(fullData20$t_k),fullData20$lambda_k,"s",ylim=c(0,40),xlim=c(-3,5),lwd=5)
+#fullData20 = read.table("20Mbp_run.ms.psmcfa.psmc.txt",header=TRUE)
+plot(log(TrueTimes),TruePops,"s",ylim=c(0,40),xlim=c(-3,5),lwd=5,main="20Mbp")
 
 counter = 1
 for (infile in rev(filelist20)) {
@@ -45,10 +50,10 @@ legend("topleft",rev(filelist20),fill=collist,bty="n",cex=0.8) #
 # the 40 Mbp test
 setwd("/home/alex/Desktop/Simulations/SplittingChromosomes/binarySplitData1Chromosome40Mbp/")
 filelist40 = list.files(pattern = "*.txt")
-filelist40 = filelist40[-7] # remove the fullData file
+# filelist40 = filelist40[-7] # remove the fullData file
 
-fullData40 = read.table("40Mbp_run.ms.psmcfa.psmc.txt",header=TRUE)
-plot(log(fullData40$t_k),fullData40$lambda_k,"s",ylim=c(0,17),xlim=c(-3,4),lwd=5)
+#fullData40 = read.table("40Mbp_run.ms.psmcfa.psmc.txt",header=TRUE)
+plot(log(TrueTimes),TruePops,"s",ylim=c(0,17),xlim=c(-3,4),lwd=5,main="40Mbp")
 
 counter = 1
 for (infile in rev(filelist40)) {
