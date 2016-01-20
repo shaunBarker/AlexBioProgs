@@ -1,6 +1,7 @@
 library("stringr", lib.loc="~/R/x86_64-pc-linux-gnu-library/3.0")
 
-setwd("/home/alex/Desktop/Software/Alex/PSMC_Regression/emptydata/")
+# setwd("/home/alex/Desktop/Software/Alex/PSMC_Regression/emptydata/") # for doing tests
+setwd("/home/alex/Desktop/Simulations/Regression/")
 filelist = list.files(pattern = "*.txt",recursive=T)
 
 ############### TRUE POPULATION AND TIME VALUES AS SPECIFIED BY THE MS COMMANDS
@@ -31,10 +32,19 @@ fauxHumanTimes = ms_eN_2_vec(fauxHumanMs_eN,TRUE)
 fauxHumanPops = ms_eN_2_vec(fauxHumanMs_eN,FALSE)
 constantPopTimes = 4*c(0.01,1:100) # dummy times
 constantPopPops = 4*rep(1,length(constantPopTimes))
+psmcSim1MS_eN = "-eN 0.01 0.1 -eN 0.06 1 -eN 0.2 0.5 -eN 1 1 -eN 2 2"
+psmcSim1Times = ms_eN_2_vec(psmcSim1MS_eN,TRUE)
+psmcSim1Pops = ms_eN_2_vec(psmcSim1MS_eN,FALSE)
 psmcSim2MS_eN = "-eN 0.1 5 -eN 0.6 20 -eN 2 5 -eN 10 10 -eN 20 5"
 psmcSim2Times = ms_eN_2_vec(psmcSim2MS_eN,TRUE)
 psmcSim2Pops = ms_eN_2_vec(psmcSim2MS_eN,FALSE)
+trench_Ms_eN = "-eN 0.01 1 -eN 0.1 0.8 -eN 0.2 0.6 -eN 0.3 0.4 -eN 0.4 0.3 -eN 0.5 0.25 -eN 0.6 0.2 -eN 0.7 0.3 -eN 0.8 0.4 -eN 0.9 0.6 -eN 1 0.8 -eN 1.1 1"
+trenchTimes = ms_eN_2_vec(trench_Ms_eN,TRUE)
+trenchPops = ms_eN_2_vec(trench_Ms_eN,FALSE)
 
+# note: we can set these here because it's the same for all of the simulations we've run so far. HOWEVER, these rates are scaled by the number of bp in the sample. this will be addressed in the for loop later
+mut_rate_theta = 65130
+recomb_rate_rho = 10973
 
 ##############################33
 # need to do a min of maxs, max of mins to determine integration limits
@@ -88,6 +98,8 @@ Bp = NULL
 Int = NULL
 Split = NULL
 Bp_per_contig = NULL
+Per_Site_Mut_Rate = NULL
+Per_Site_Recomb_Rate = NULL
 Pop_Dynamics_Type = NULL
 Error = NULL
 
@@ -103,19 +115,54 @@ for (infile in filelist) { # make sure I change things to Shaun's file format
   Pop_Dynamics_Type_tmp = gsub(pattern = "(\\/.*)(.*)(Bp.*)", replacement = "\\2", x = infile)
   Pop_Dynamics_Type = append(Pop_Dynamics_Type,Pop_Dynamics_Type_tmp)
   
+  Per_Site_Mut_Rate_tmp = mut_rate_theta/Bp_tmp
+  Per_Site_Mut_Rate = append(Per_Site_Mut_Rate,Per_Site_Mut_Rate_tmp)
+  Per_Site_Recomb_Rate_tmp = recomb_rate_rho/Bp_tmp
+  Per_Site_Recomb_Rate = append(Per_Site_Recomb_Rate,Per_Site_Mut_Rate_tmp)
+  
   # error analysis
   data = read.table(infile,header=TRUE)
   # need to make sure you integrate against the correct true curve
   if (Pop_Dynamics_Type_tmp == "fauxHuman") {
-    Error = integrate(absdifference,logmax_of_mins,logmin_of_maxs, d1=log(fauxHumanTimes), d2=fauxHumanPops, d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value 
+    ErrorVal = integrate(absdifference,logmax_of_mins,logmin_of_maxs, d1=log(fauxHumanTimes), d2=fauxHumanPops, d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value 
+    Error = append(Error,ErrorVal)
   }
   if (Pop_Dynamics_Type_tmp == "constantPop") {
     Error = integrate(absdifference,logmax_of_mins,logmin_of_maxs, d1=log(constantPopTimes), d2=constantPopPops, d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value 
+    Error = append(Error,ErrorVal)
   } 
   if (Pop_Dynamics_Type_tmp == "psmcSim2") {
     Error = integrate(absdifference,logmax_of_mins,logmin_of_maxs, d1=log(psmcSim2Times), d2=psmcSim2Pops, d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value
+    Error = append(Error,ErrorVal)
+  }
+  if (Pop_Dynamics_Type_tmp == "psmcSim1") {
+    Error = integrate(absdifference,logmax_of_mins,logmin_of_maxs, d1=log(psmcSim1Times), d2=psmcSim1Pops, d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value
+    Error = append(Error,ErrorVal)
+  }
+  if (Pop_Dynamics_Type_tmp == "trench") {
+    Error = integrate(absdifference,logmax_of_mins,logmin_of_maxs, d1=log(trenchTimes), d2=trenchPops, d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value
+    Error = append(Error,ErrorVal)
   }
 } 
-Results = data.frame(Bp,Int,Split,Bp_per_contig,Pop_Dynamics_Type,Error)
+Results = data.frame(Bp,Int,Split,Bp_per_contig,Per_Site_Mut_Rate,Per_Site_Recomb_Rate,Pop_Dynamics_Type,Error)
 
 Results
+
+
+######################################################
+######################################################
+######################################################
+
+# Stuff broken ... time to fix
+
+#plot(log(fauxHumanTimes),fauxHumanPops,"s",ylim=c(0,17),xlim=c(-3,4),lwd=5,main=">_<")
+#collist = c("blue","brown","gold","red","green","purple","cyan","orange","magenta","pink","darkolivegreen")
+
+#counter = 1
+#for (infile in rev(filelist)) {
+#  infile.data = read.table(infile,header=TRUE)
+#  lines(log(infile.data$t_k/2),infile.data$lambda_k,"s",col=collist[counter],lwd=2.5)
+#  counter = counter + 1
+#}
+#legend("topleft",rev(filelist),fill=collist,bty="n",cex=0.8) #
+
