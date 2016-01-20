@@ -1,7 +1,8 @@
-library("stringr", lib.loc="~/R/x86_64-pc-linux-gnu-library/3.0")
+library(stringr)
 
 # setwd("/home/alex/Desktop/Software/Alex/PSMC_Regression/emptydata/") # for doing tests
-setwd("/home/alex/Desktop/Simulations/Regression/")
+#setwd("/home/alex/Desktop/Simulations/Regression/")
+
 filelist = list.files(pattern = "*.txt",recursive=T)
 
 ############### TRUE POPULATION AND TIME VALUES AS SPECIFIED BY THE MS COMMANDS
@@ -18,7 +19,23 @@ ms_eN_2_vec = function(ms_input, t_or_p) {
     return(Pops)    
   }
 }
-
+############### TRUE POPULATION AND TIME VALUES AS SPECIFIED BY THE MS COMMANDS extracted from a *.ms file
+msFile_eN_2_vec = function(msFilePath, t_or_p) {
+  # takes msFilePath as a path to a .ms file and returns:
+  # t_or_p can be TRUE or FALSE. If TRUE, gives times. If FALSE, gives populations.
+  ms_input=system2('head',args=paste('-n 1 ',msFilePath),stdout=TRUE)
+  ms_input=paste('-eN',regmatches(ms_input, regexpr("-eN", ms_input), invert = TRUE)[[1]][2])
+  ms_input=regmatches(ms_input, regexpr("-l", ms_input), invert = TRUE)[[1]][1]
+  TimesPops = as.numeric(unlist(str_extract_all(gsub(pattern = "-eN ", replacement = "", x = ms_input), "[\\.0-9e-]+")))  # remove the -eN switch, convert to a vector
+  if (t_or_p == TRUE) {
+    Times = 4*TimesPops[c(TRUE,FALSE)] # extracts the odd values (i.e. the times) and scales
+    return(Times)
+  } # returning pops
+  else {
+    Pops = 4*TimesPops[c(FALSE,TRUE)] # extracts the even values (i.e. the pops) and scales
+    return(Pops)    
+  }
+}
 #FauxHumanMs_eN = "-eN 0.0055 0.0832 -eN 0.0089 0.0489 -eN 0.0130 0.0607 -eN 0.0177 0.1072 -eN 0.0233 0.2093 -eN 0.0299 0.3630 -eN 0.0375 0.5041 -eN 0.0465 0.5870 -eN 0.0571 0.6343 -eN 0.0695 0.6138 -eN 0.0840 0.5292 -eN 0.1010 0.4409 -eN 0.1210 0.3749 -eN 0.1444 0.3313 -eN 0.1718 0.3066 -eN 0.2040 0.2952 -eN 0.2418 0.2915 -eN 0.2860 0.2950 -eN 0.3379 0.3103 -eN 0.3988 0.3458 -eN 0.4701 0.4109 -eN 0.5538 0.5048 -eN 0.6520 0.5996 -eN 0.7671 0.6440 -eN 0.9020 0.6178 -eN 1.0603 0.5345 -eN 1.4635 1.7931" # as specified by ms
 #FauxHumanTimesPops = as.numeric(unlist(str_extract_all(gsub(pattern = "-eN ", replacement = "", x = FauxHumanMs_eN), "[\\.0-9e-]+")))  # remove the -eN switch, convert to a vector
 #FauxHumanTimes = 4*FauxHumanTimesPops[c(TRUE,FALSE)] # extracts the odd values (i.e. the times) and scales
@@ -122,27 +139,32 @@ for (infile in filelist) { # make sure I change things to Shaun's file format
   
   # error analysis
   data = read.table(infile,header=TRUE)
-  # need to make sure you integrate against the correct true curve
-  if (Pop_Dynamics_Type_tmp == "fauxHuman") {
-    ErrorVal = integrate(absdifference,logmax_of_mins,logmin_of_maxs, d1=log(fauxHumanTimes), d2=fauxHumanPops, d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value 
-    Error = append(Error,ErrorVal)
-  }
-  if (Pop_Dynamics_Type_tmp == "constantPop") {
-    Error = integrate(absdifference,logmax_of_mins,logmin_of_maxs, d1=log(constantPopTimes), d2=constantPopPops, d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value 
-    Error = append(Error,ErrorVal)
-  } 
-  if (Pop_Dynamics_Type_tmp == "psmcSim2") {
-    Error = integrate(absdifference,logmax_of_mins,logmin_of_maxs, d1=log(psmcSim2Times), d2=psmcSim2Pops, d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value
-    Error = append(Error,ErrorVal)
-  }
-  if (Pop_Dynamics_Type_tmp == "psmcSim1") {
-    Error = integrate(absdifference,logmax_of_mins,logmin_of_maxs, d1=log(psmcSim1Times), d2=psmcSim1Pops, d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value
-    Error = append(Error,ErrorVal)
-  }
-  if (Pop_Dynamics_Type_tmp == "trench") {
-    Error = integrate(absdifference,logmax_of_mins,logmin_of_maxs, d1=log(trenchTimes), d2=trenchPops, d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value
-    Error = append(Error,ErrorVal)
-  }
+  #simplified if statements to concatenating Pop_Dynamics_Type_tmp (which should hopefully contain the name of the sim we're running)
+  ErrorVal = integrate(absdifference, logmax_of_mins, logmin_of_maxs, d1=log(get(paste(Pop_Dynamics_Type_tmp,'Times'))), d2=get(paste(Pop_Dynamics_Type_tmp,'Pops')), d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value 
+  Error = append(Error,ErrorVal)
+  
+#   
+#   # need to make sure you integrate against the correct true curve
+#   if (Pop_Dynamics_Type_tmp == "fauxHuman") {
+#     ErrorVal = integrate(absdifference,logmax_of_mins,logmin_of_maxs, d1=log(fauxHumanTimes), d2=fauxHumanPops, d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value 
+#     Error = append(Error,ErrorVal)
+#   }
+#   if (Pop_Dynamics_Type_tmp == "constantPop") {
+#     Error = integrate(absdifference,logmax_of_mins,logmin_of_maxs, d1=log(constantPopTimes), d2=constantPopPops, d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value 
+#     Error = append(Error,ErrorVal)
+#   } 
+#   if (Pop_Dynamics_Type_tmp == "psmcSim2") {
+#     Error = integrate(absdifference,logmax_of_mins,logmin_of_maxs, d1=log(psmcSim2Times), d2=psmcSim2Pops, d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value
+#     Error = append(Error,ErrorVal)
+#   }
+#   if (Pop_Dynamics_Type_tmp == "psmcSim1") {
+#     Error = integrate(absdifference,logmax_of_mins,logmin_of_maxs, d1=log(psmcSim1Times), d2=psmcSim1Pops, d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value
+#     Error = append(Error,ErrorVal)
+#   }
+#   if (Pop_Dynamics_Type_tmp == "trench") {
+#     Error = integrate(absdifference,logmax_of_mins,logmin_of_maxs, d1=log(trenchTimes), d2=trenchPops, d3=log(data$t_k/2), d4=data$lambda_k, subdivisions=10000)$value
+#     Error = append(Error,ErrorVal)
+#   }
 } 
 Results = data.frame(Bp,Int,Split,Bp_per_contig,Per_Site_Mut_Rate,Per_Site_Recomb_Rate,Pop_Dynamics_Type,Error)
 
